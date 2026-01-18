@@ -24,16 +24,13 @@ async function printAndClose() {
 
   await device.transferOut(1, data);
 
-  // zavrie popup po tlači
   window.close();
 }
 
 async function init() {
-  // zistí, či už máš povolenú tlačiareň
   const devices = await navigator.usb.getDevices();
 
   if (devices.length === 0) {
-    // prvýkrát – treba povolenie
     document.body.innerHTML = "<button id='connect'>Pripojiť tlačiareň</button>";
     document.getElementById("connect").onclick = async () => {
       device = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x0A5F }] });
@@ -45,7 +42,6 @@ async function init() {
     return;
   }
 
-  // tlačiareň už bola povolená
   device = devices[0];
   await device.open();
   await device.selectConfiguration(1);
