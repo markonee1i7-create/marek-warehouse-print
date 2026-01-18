@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif;">
+
+<script>
+let device;
+
+async function printAndClose() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+  if (!code) window.close();
+
+  const zpl = `
+^XA
+^FO40,40^A0N,40,40^FD${code}^FS
+^FO40,120
+^BQN,2,6
+^FDLA,${code}^FS
+^XZ
+  `;
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode(zpl);
+
+  await device.transferOut(1, data);
+
+  // zavrie popup po tlači
+  window.close();
+}
+
+async function init() {
+  // zistí, či už máš povolenú tlačiareň
+  const devices = await navigator.usb.getDevices();
+
+  if (devices.length === 0) {
+    // prvýkrát – treba povolenie
+    document.body.innerHTML = "<button id='connect'>Pripojiť tlačiareň</button>";
+    document.getElementById("connect").onclick = async () => {
+      device = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x0A5F }] });
+      await device.open();
+      await device.selectConfiguration(1);
+      await device.claimInterface(0);
+      printAndClose();
+    };
+    return;
+  }
+
+  // tlačiareň už bola povolená
+  device = devices[0];
+  await device.open();
+  await device.selectConfiguration(1);
+  await device.claimInterface(0);
+
+  printAndClose();
+}
+
+init();
+</script>
+
+</body>
+</html>
