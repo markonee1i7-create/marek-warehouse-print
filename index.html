@@ -2,82 +2,64 @@
 <html lang="sk">
 <head>
 <meta charset="UTF-8">
-<title>Zebra WebUSB Diagnostika</title>
+<title>Etiketa 100x40</title>
+
 <style>
-  body { font-family: Arial; padding: 20px; }
-  button { padding: 10px 20px; font-size: 16px; }
-  pre { background: #f4f4f4; padding: 15px; border-radius: 6px; }
+  @page {
+    size: 100mm 40mm;
+    margin: 0;
+  }
+  body {
+    margin: 0;
+  }
+  .label {
+    width: 100mm;
+    height: 40mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+  }
+  #barcode {
+    margin-bottom: 4mm;
+  }
+  #text {
+    font-size: 14pt;
+  }
 </style>
+
+<!-- JsBarcode CDN -->
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
 </head>
 <body>
 
-<h2>Zebra ZD421D – WebUSB Diagnostika</h2>
-<p>Klikni na tlačidlo a sleduj výstup nižšie.</p>
-
-<button id="connect">Pripojiť Zebra</button>
-
-<h3>Výstup:</h3>
-<pre id="log"></pre>
+<div class="label">
+  <svg id="barcode"></svg>
+  <div id="text"></div>
+</div>
 
 <script>
-function log(msg) {
-  document.getElementById("log").textContent += msg + "\n";
-  console.log(msg);
-}
+  const value = new URLSearchParams(location.search).get("t") || "";
 
-document.getElementById("connect").addEventListener("click", async () => {
-  document.getElementById("log").textContent = "";
+  // Nastavenie textu pod kódom
+  document.getElementById("text").textContent = value;
 
-  let device;
+  // Generovanie čiarového kódu
+  JsBarcode("#barcode", value, {
+    format: "CODE128",
+    displayValue: false,
+    height: 60,
+    width: 2,
+    margin: 0
+  });
 
-  try {
-    device = await navigator.usb.requestDevice({
-      filters: [{ vendorId: 0x0A5F }]
-    });
-    log("DEVICE FOUND: " + device.productName);
-  } catch (e) {
-    log("ERROR: Zariadenie nebolo vybrané alebo neexistuje.");
-    log(e);
-    return;
-  }
+  // Automatická tlač
+  window.print();
 
-  try {
-    await device.open();
-    log("OPEN: OK");
-  } catch (e) {
-    log("OPEN ERROR: " + e);
-    return;
-  }
-
-  try {
-    await device.selectConfiguration(1);
-    log("CONFIG: OK");
-  } catch (e) {
-    log("CONFIG ERROR: " + e);
-    return;
-  }
-
-  log("INTERFACES:");
-  log(JSON.stringify(device.configuration.interfaces, null, 2));
-
-  try {
-    await device.claimInterface(0);
-    log("CLAIM: OK");
-  } catch (e) {
-    log("CLAIM ERROR: " + e);
-    return;
-  }
-
-  try {
-    const encoder = new TextEncoder();
-    const data = encoder.encode("^XA^FO50,50^ADN,36,20^FDTEST WEBUSB^FS^XZ");
-    const result = await device.transferOut(1, data);
-    log("TRANSFER: OK");
-    log(JSON.stringify(result, null, 2));
-  } catch (e) {
-    log("TRANSFER ERROR: " + e);
-  }
-});
+  // Automatické zatvorenie okna po tlači
+  window.onafterprint = () => window.close();
 </script>
 
 </body>
