@@ -1,56 +1,83 @@
 <!DOCTYPE html>
-<html>
-<body style="font-family: sans-serif;">
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<title>Zebra WebUSB Diagnostika</title>
+<style>
+  body { font-family: Arial; padding: 20px; }
+  button { padding: 10px 20px; font-size: 16px; }
+  pre { background: #f4f4f4; padding: 15px; border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<h2>Zebra ZD421D – WebUSB Diagnostika</h2>
+<p>Klikni na tlačidlo a sleduj výstup nižšie.</p>
+
+<button id="connect">Pripojiť Zebra</button>
+
+<h3>Výstup:</h3>
+<pre id="log"></pre>
 
 <script>
-let device;
-
-async function printAndClose() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get("code");
-  if (!code) window.close();
-
-  const zpl = `
-^XA
-^FO40,40^A0N,40,40^FD${code}^FS
-^FO40,120
-^BQN,2,6
-^FDLA,${code}^FS
-^XZ
-  `;
-
-  const encoder = new TextEncoder();
-  const data = encoder.encode(zpl);
-
-  await device.transferOut(1, data);
-
-  window.close();
+function log(msg) {
+  document.getElementById("log").textContent += msg + "\n";
+  console.log(msg);
 }
 
-async function init() {
-  const devices = await navigator.usb.getDevices();
+document.getElementById("connect").addEventListener("click", async () => {
+  document.getElementById("log").textContent = "";
 
-  if (devices.length === 0) {
-    document.body.innerHTML = "<button id='connect'>Pripojiť tlačiareň</button>";
-    document.getElementById("connect").onclick = async () => {
-      device = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x0A5F }] });
-      await device.open();
-      await device.selectConfiguration(1);
-      await device.claimInterface(0);
-      printAndClose();
-    };
+  let device;
+
+  try {
+    device = await navigator.usb.requestDevice({
+      filters: [{ vendorId: 0x0A5F }]
+    });
+    log("DEVICE FOUND: " + device.productName);
+  } catch (e) {
+    log("ERROR: Zariadenie nebolo vybrané alebo neexistuje.");
+    log(e);
     return;
   }
 
-  device = devices[0];
-  await device.open();
-  await device.selectConfiguration(1);
-  await device.claimInterface(0);
+  try {
+    await device.open();
+    log("OPEN: OK");
+  } catch (e) {
+    log("OPEN ERROR: " + e);
+    return;
+  }
 
-  printAndClose();
-}
+  try {
+    await device.selectConfiguration(1);
+    log("CONFIG: OK");
+  } catch (e) {
+    log("CONFIG ERROR: " + e);
+    return;
+  }
 
-init();
+  log("INTERFACES:");
+  log(JSON.stringify(device.configuration.interfaces, null, 2));
+
+  try {
+    await device.claimInterface(0);
+    log("CLAIM: OK");
+  } catch (e) {
+    log("CLAIM ERROR: " + e);
+    return;
+  }
+
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode("^XA^FO50,50^ADN,36,20^FDTEST WEBUSB^FS^XZ");
+    const result = await device.transferOut(1, data);
+    log("TRANSFER: OK");
+    log(JSON.stringify(result, null, 2));
+  } catch (e) {
+    log("TRANSFER ERROR: " + e);
+  }
+});
 </script>
 
 </body>
