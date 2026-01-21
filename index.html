@@ -18,10 +18,10 @@
     height: 15mm;
     display: flex;
     flex-direction: column;
+    justify-content: flex-start; /* všetko ide odhora */
     align-items: center;
     font-family: Arial, sans-serif;
-    padding-top: 2mm;   /* barcode 2 mm od vrchu */
-    padding-bottom: 1mm; /* text 1 mm od spodku */
+    padding-top: 2mm;   /* barcode posunutý o 2 mm nižšie */
   }
 
   #barcode {
@@ -30,7 +30,40 @@
   }
 
   #text {
-    font-size: 12pt;     /* veľký text */
+    font-size: 12pt;
     font-weight: bold;
     text-align: center;
-    margin
+    margin-top: -1mm;      /* zmenšenie medzery medzi barcode a textom */
+    margin-bottom: 0mm;    /* nalepené na spodok */
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+</head>
+<body>
+
+<div class="label">
+  <svg id="barcode"></svg>
+  <div id="text"></div>
+</div>
+
+<script>
+  const value = new URLSearchParams(location.search).get("t") || "";
+
+  document.getElementById("text").textContent = value;
+
+  JsBarcode("#barcode", value, {
+    format: "CODE128",
+    displayValue: false,
+    height: 10,   // znížené, aby sa všetko zmestilo
+    width: 1,
+    margin: 0
+  });
+
+  window.print();
+  window.onafterprint = () => window.close();
+</script>
+
+</body>
+</html>
