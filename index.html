@@ -18,20 +18,20 @@
     height: 15mm;
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* rozloží obsah hore a dole */
+    justify-content: space-between;
     align-items: center;
     font-family: Arial, sans-serif;
-    padding-top: 0mm;
+    padding-top: 2mm;   /* barcode posunutý o 2 mm nižšie */
     padding-bottom: 0mm;
   }
 
   #barcode {
-    margin-top: 0mm; /* nalepené na vrch */
+    margin-top: 0;
   }
 
   #text {
-    font-size: 10pt; /* maximálna veľkosť pre 15 mm výšku */
-    margin-bottom: 0mm; /* nalepené na spodok */
+    font-size: 12pt;     /* veľký text */
+    margin-bottom: 0mm;  /* nalepené na spodok */
     font-weight: bold;
     text-align: center;
   }
@@ -55,7 +55,7 @@
   JsBarcode("#barcode", value, {
     format: "CODE128",
     displayValue: false,
-    height: 12,   // optimalizované pre hornú časť 15 mm etikety
+    height: 12,   // stále optimalizované pre 15 mm etiketu
     width: 1,
     margin: 0
   });
